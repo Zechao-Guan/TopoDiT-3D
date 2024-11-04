@@ -104,3 +104,7 @@ webencodings==0.5.1
 Werkzeug==2.0.3
 widgetsnbextension==3.6.1
 zipp==3.6.0
+persim
+pytorch-lightning==1.5.6
+PyYAML==6.0
+torchsummary==1.5.1
