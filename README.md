@@ -1,3 +1,5 @@
+# Demos
+![demos](https://github.com/Zechao-Guan/TopoDiT-3D/blob/main/demos/teaser.gif)
 # TopoDiT-3D
 ![TopoDiT-3D](https://github.com/Zechao-Guan/TopoDiT-3D/blob/main/demos/architercture.png)
 
@@ -60,9 +62,3 @@ bash ./scripts_resampler/train_vae.bash
 # Test TopoDiT-3D
 bash ./scripts_resampler/train/test_S4_chair.sh
 ```
-
-## Visual
-![chair](https://github.com/Zechao-Guan/TopoDiT-3D/blob/main/figures/xr_chair.jpg)
-![airplane](https://github.com/Zechao-Guan/TopoDiT-3D/blob/main/figures/xr_airplane.jpg)
-![car](https://github.com/Zechao-Guan/TopoDiT-3D/blob/main/figures/xr_car.jpg)
-![55categories](https://github.com/Zechao-Guan/TopoDiT-3D/blob/main/figures/55categories.jpg)
