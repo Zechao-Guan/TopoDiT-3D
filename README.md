@@ -1,7 +1,3 @@
-# Demos
-[Watch the demos](http://github.com/Zechao-Guan/TopoDiT-3D/blob/main/demos/demo1.mp4)
-
-
 # TopoDiT-3D
 ![TopoDiT-3D](https://github.com/Zechao-Guan/TopoDiT-3D/blob/main/demos/architercture.png)
 
