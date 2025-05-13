@@ -16,7 +16,6 @@ import math
 from timm.models.layers import to_2tuple
 from timm.models.vision_transformer import PatchEmbed, Attention, Mlp
 import sys
-sys.path.append('/mnt/dolphinfs/hdd_pool/docker/user/hadoop-mlm/guanzechao/projects/DiT-3D-main/')
 from modules.voxelization import Voxelization
 import modules.functional as F
 
@@ -46,8 +45,8 @@ class PatchEmbed_Voxel(nn.Module):
 
     def forward(self, x):
         B, C, X, Y, Z = x.shape
-        x = x.float() # 将卷积后的输出在第2、3、4维度上展平，得到形状为 (B, embed_dim, X' * Y' * Z')
-        x = self.proj(x).flatten(2).transpose(1, 2) # 将第1维和第2维交换，得到形状为 (B, X' * Y' * Z', embed_dim)
+        x = x.float() 
+        x = self.proj(x).flatten(2).transpose(1, 2)
         return x
     
 
@@ -79,7 +78,7 @@ class TimestepEmbedder(nn.Module):
         freqs = torch.exp(
             -math.log(max_period) * torch.arange(start=0, end=half, dtype=torch.float32) / half
         ).to(device=t.device)
-        args = t[:, None].float() * freqs[None] #t[:, None] 将 t 扩展一个维度，使其形状从 (B) 变为 (B, 1)，其中 B 是批量大小。freqs[None] 将 freqs 扩展一个维度，使其形状从 (half) 变为 (1, half)。
+        args = t[:, None].float() * freqs[None]
         embedding = torch.cat([torch.cos(args), torch.sin(args)], dim=-1)
         if dim % 2:
             embedding = torch.cat([embedding, torch.zeros_like(embedding[:, :1])], dim=-1)
@@ -621,81 +620,60 @@ DiT3D_resampler_models = {
 
 
 def count_model_parameters(model):
-    """
-    计算模型的参数数量
-    """
     total_params = sum(p.numel() for p in model.parameters())
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     return total_params, trainable_params
 
 def estimate_memory_usage(model, input_data, t, y):
-    """
-    估算模型的显存使用量
-    """
-    # 计算模型参数占用的显存
     total_params, _ = count_model_parameters(model)
-    param_memory = total_params * 4 / (1024 ** 2)  # 参数占用的显存（MB），假设每个参数为4字节（32位浮点数）
+    param_memory = total_params * 4 / (1024 ** 2)
 
-    # 计算激活值占用的显存
     def forward_hook(module, input, output):
         if isinstance(output, torch.Tensor):
-            activation_memory.append(output.numel() * 4 / (1024 ** 2))  # 激活值占用的显存（MB）
+            activation_memory.append(output.numel() * 4 / (1024 ** 2))
     
     activation_memory = []
     hooks = []
     for layer in model.children():
         hooks.append(layer.register_forward_hook(forward_hook))
 
-    # 前向传播
     with torch.no_grad():
         model(input_data, t, y)
 
-    # 移除钩子
     for hook in hooks:
         hook.remove()
 
     total_activation_memory = sum(activation_memory)
-
-    # 总显存使用量
     total_memory = param_memory + total_activation_memory
 
     return param_memory, total_activation_memory, total_memory
 
 def test_dit_model():
-    # 检查是否有可用的 GPU
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # 创建模型实例并移动到设备上
     model = DiT_XL_2(pretrained=False).to(device)
-    model.eval()  # 设置为评估模式
+    model.eval()  
 
-    # 计算模型参数数量
     total_params, trainable_params = count_model_parameters(model)
     print(f"Total parameters: {total_params}")
     print(f"Trainable parameters: {trainable_params}")
 
-    # 生成测试数据
     batch_size = 16
     num_points = 2048
     num_classes = 1
 
-    # 随机生成输入点云 (B, C, P) 并移动到设备上
-    x = torch.randn(batch_size, 3, num_points).to(device)  # 假设输入为3通道的点云数据
+    x = torch.randn(batch_size, 3, num_points).to(device
 
-    # 随机生成时间步 (B,) 并移动到设备上
     t = torch.randint(0, 1000, (batch_size,)).to(device)
 
-    # 随机生成标签 (B,) 并移动到设备上
     y = torch.randint(0, num_classes, (batch_size,)).to(device)
 
-    # 估算显存使用量
     param_memory, activation_memory, total_memory = estimate_memory_usage(model, x, t, y)
     print(f"Parameter memory: {param_memory:.2f} MB, {param_memory / 1024:.2f} G")
     print(f"Backward Parameter memory: {param_memory:.2f} MB, {param_memory / 1024:.2f} G")
     print(f"Activation memory: {activation_memory:.2f} MB, {activation_memory / 1024:.2f} G")
     print(f"Total estimated memory: {total_memory + param_memory:.2f} MB, {(total_memory + param_memory) / 1024:.2f} G")
-
-    # 前向传播
     with torch.no_grad():
         output = model(x, t, y)
 
